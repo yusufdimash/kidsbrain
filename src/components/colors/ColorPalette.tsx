@@ -110,10 +110,16 @@ export default function ColorPalette({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
+    paddingTop: SPACING.sm + 4,
+    paddingBottom: SPACING.sm,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 8,
   },
   scrollContent: {
     paddingHorizontal: SPACING.md,
@@ -125,9 +131,9 @@ const styles = StyleSheet.create({
     width: 52,
   },
   colorCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     ...SHADOWS.small,
   },
   colorCircleSelected: {

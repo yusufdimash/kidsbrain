@@ -1,13 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GameHeader from '../components/GameHeader';
 import StarReward from '../components/StarReward';
 import ConfettiOverlay from '../components/ConfettiOverlay';
@@ -30,9 +30,9 @@ const MODE_BUTTONS: { mode: GameMode; labelId: string; labelEn: string; emoji: s
 ];
 
 export default function ColorWorldScreen() {
-  const { width: screenWidth } = useWindowDimensions();
   const progress = useProgress('colorWorld');
   const sound = useSound();
+  const insets = useSafeAreaInsets();
 
   const [mode, setMode] = useState<GameMode>('menu');
   const [showConfetti, setShowConfetti] = useState(false);
@@ -42,6 +42,8 @@ export default function ColorWorldScreen() {
   const [selectedPicture, setSelectedPicture] = useState<PictureTemplate | null>(null);
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLORS[0]);
   const [filledZones, setFilledZones] = useState<Record<string, string>>({});
+
+  const completionTriggered = useRef(false);
 
   // Game keys for remount
   const [mixKey, setMixKey] = useState(0);
@@ -70,9 +72,11 @@ export default function ColorWorldScreen() {
   // Check if coloring is complete whenever zones change
   React.useEffect(() => {
     if (mode !== 'coloring' || !selectedPicture) return;
+    if (completionTriggered.current) return;
     const totalZones = selectedPicture.zones.length;
     const filledCount = Object.keys(filledZones).length;
     if (filledCount >= totalZones && filledCount > 0) {
+      completionTriggered.current = true;
       setTimeout(handleColoringComplete, 500);
     }
   }, [filledZones, mode, selectedPicture, handleColoringComplete]);
@@ -103,6 +107,7 @@ export default function ColorWorldScreen() {
       setRewardStars(0);
     }
     if (mode === 'coloring' && selectedPicture) {
+      completionTriggered.current = false;
       setSelectedPicture(null);
       setFilledZones({});
       return;
@@ -114,6 +119,7 @@ export default function ColorWorldScreen() {
     setShowConfetti(false);
     setRewardStars(0);
     if (mode === 'coloring') {
+      completionTriggered.current = false;
       setFilledZones({});
     } else if (mode === 'mix') {
       setMixKey((k) => k + 1);
@@ -197,12 +203,6 @@ export default function ColorWorldScreen() {
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.subHeader}>
-            <Pressable style={styles.backBtn} onPress={handleBack}>
-              <Text style={styles.backBtnText}>{'\u25C0'} {S.back.id}</Text>
-            </Pressable>
-          </View>
-
           <Text style={styles.pickPictureText}>
             {bilingual(S.colorFill)}
           </Text>
@@ -233,24 +233,45 @@ export default function ColorWorldScreen() {
               </Animated.View>
             ))}
           </View>
+
+          <View style={[styles.bottomButtons, { marginTop: SPACING.xl }]}>
+            <Pressable style={styles.backToHomeButton} onPress={handleBack}>
+              <Text style={styles.backToHomeText}>◀ {S.back.id} / {S.back.en}</Text>
+            </Pressable>
+          </View>
         </ScrollView>
       )}
 
       {/* Coloring mode - canvas */}
       {mode === 'coloring' && selectedPicture && !showConfetti && (
         <View style={styles.coloringContainer}>
-          <View style={styles.subHeader}>
-            <Pressable style={styles.backBtn} onPress={handleBack}>
-              <Text style={styles.backBtnText}>
-                {'\u25C0'} {selectedPicture.nameId}
+          {/* Color palette + status at top */}
+          <ColorPalette
+            selectedColor={selectedColor}
+            onSelectColor={setSelectedColor}
+          />
+          <View style={styles.statusBar}>
+            <View style={styles.statusLeft}>
+              <View style={[styles.statusSwatch, { backgroundColor: selectedColor }]} />
+              <Text style={styles.statusColorName}>
+                {COLOR_NAMES[selectedColor]?.id ?? ''}
               </Text>
-            </Pressable>
-            <Pressable
-              style={styles.resetBtn}
-              onPress={() => setFilledZones({})}
-            >
-              <Text style={styles.resetBtnText}>{bilingual(S.retry)}</Text>
-            </Pressable>
+            </View>
+            <View style={styles.statusRight}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${(Object.keys(filledZones).length / selectedPicture.zones.length) * 100}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressText}>
+                {Object.keys(filledZones).length}/{selectedPicture.zones.length}
+              </Text>
+            </View>
           </View>
 
           <ScrollView
@@ -258,49 +279,76 @@ export default function ColorWorldScreen() {
             style={styles.canvasScroll}
           >
             <ColoringCanvas
-              zones={selectedPicture.zones}
-              canvasWidth={selectedPicture.canvasWidth}
-              canvasHeight={selectedPicture.canvasHeight}
+              picture={selectedPicture}
               selectedColor={selectedColor}
               onZoneFill={handleZoneFill}
               filledZones={filledZones}
             />
-
-            {/* Zone counter */}
-            <Text style={styles.zoneCounter}>
-              {Object.keys(filledZones).length}/{selectedPicture.zones.length} zona
-            </Text>
           </ScrollView>
 
-          <ColorPalette
-            selectedColor={selectedColor}
-            onSelectColor={setSelectedColor}
-          />
+          <View style={[styles.bottomButtons, { paddingBottom: Math.max(insets.bottom, SPACING.lg) }]}>
+            <Pressable
+              style={styles.tryAgainButton}
+              onPress={() => setFilledZones({})}
+            >
+              <Text style={styles.tryAgainEmoji}>🔄</Text>
+              <Text style={styles.tryAgainText}>
+                {S.retry.id} / {S.retry.en}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.backToHomeButton} onPress={handleBack}>
+              <Text style={styles.backToHomeText}>
+                ◀ {S.back.id} / {S.back.en}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       )}
 
       {/* Mix mode */}
       {mode === 'mix' && !showConfetti && (
-        <View style={styles.gameContainer}>
-          <View style={styles.subHeader}>
-            <Pressable style={styles.backBtn} onPress={handleBack}>
-              <Text style={styles.backBtnText}>{'\u25C0'} {S.back.id}</Text>
+        <ScrollView style={styles.gameContainer} contentContainerStyle={styles.gameScrollContent}>
+          <ColorMixGame key={mixKey} onComplete={handleMixComplete} />
+          <View style={styles.bottomButtons}>
+            <Pressable
+              style={styles.tryAgainButton}
+              onPress={() => setMixKey((k) => k + 1)}
+            >
+              <Text style={styles.tryAgainEmoji}>🔄</Text>
+              <Text style={styles.tryAgainText}>
+                {S.retry.id} / {S.retry.en}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.backToHomeButton} onPress={handleBack}>
+              <Text style={styles.backToHomeText}>
+                ◀ {S.back.id} / {S.back.en}
+              </Text>
             </Pressable>
           </View>
-          <ColorMixGame key={mixKey} onComplete={handleMixComplete} />
-        </View>
+        </ScrollView>
       )}
 
       {/* Odd One Out mode */}
       {mode === 'odd' && !showConfetti && (
-        <View style={styles.gameContainer}>
-          <View style={styles.subHeader}>
-            <Pressable style={styles.backBtn} onPress={handleBack}>
-              <Text style={styles.backBtnText}>{'\u25C0'} {S.back.id}</Text>
+        <ScrollView style={styles.gameContainer} contentContainerStyle={styles.gameScrollContent}>
+          <OddOneOutGame key={oddKey} rounds={6} onComplete={handleOddComplete} />
+          <View style={styles.bottomButtons}>
+            <Pressable
+              style={styles.tryAgainButton}
+              onPress={() => setOddKey((k) => k + 1)}
+            >
+              <Text style={styles.tryAgainEmoji}>🔄</Text>
+              <Text style={styles.tryAgainText}>
+                {S.retry.id} / {S.retry.en}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.backToHomeButton} onPress={handleBack}>
+              <Text style={styles.backToHomeText}>
+                ◀ {S.back.id} / {S.back.en}
+              </Text>
             </Pressable>
           </View>
-          <OddOneOutGame key={oddKey} rounds={6} onComplete={handleOddComplete} />
-        </View>
+        </ScrollView>
       )}
 
       {/* Reward overlay */}
@@ -345,6 +393,45 @@ const styles = StyleSheet.create({
   },
   gameContainer: {
     flex: 1,
+  },
+  gameScrollContent: {
+    flexGrow: 1,
+  },
+  bottomButtons: {
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.lg,
+  },
+  tryAgainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.colorWorld,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.medium,
+  },
+  tryAgainEmoji: {
+    fontSize: 20,
+  },
+  tryAgainText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  backToHomeButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.small,
+  },
+  backToHomeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textLight,
   },
   coloringContainer: {
     flex: 1,
@@ -417,37 +504,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#999',
   },
-  subHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.xs,
-    paddingBottom: SPACING.sm,
-  },
-  backBtn: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: RADIUS.sm,
-  },
-  backBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  resetBtn: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: RADIUS.sm,
-  },
-  resetBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textLight,
-    textAlign: 'center',
-  },
   // Picture selection
   pickPictureText: {
     fontSize: 18,
@@ -495,12 +551,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
   },
-  zoneCounter: {
-    fontSize: 14,
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  statusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  statusSwatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  statusColorName: {
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.textLight,
-    textAlign: 'center',
-    marginTop: SPACING.md,
+  },
+  statusRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  progressTrack: {
+    width: 100,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: COLORS.success,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textLight,
+    minWidth: 30,
   },
   // Reward
   rewardOverlay: {

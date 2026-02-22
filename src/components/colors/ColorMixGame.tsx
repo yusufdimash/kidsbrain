@@ -153,19 +153,19 @@ export default function ColorMixGame({ onComplete }: ColorMixGameProps) {
 
   // Mixing animation
   const mixProgress = useSharedValue(0);
-  const circle1X = useSharedValue(-40);
-  const circle2X = useSharedValue(40);
+  const circle1X = useSharedValue(0);
+  const circle2X = useSharedValue(0);
 
   useEffect(() => {
     // Reset animation for each question
-    circle1X.value = -40;
-    circle2X.value = 40;
+    circle1X.value = 0;
+    circle2X.value = 0;
     mixProgress.value = 0;
   }, [currentRound]);
 
   const triggerMixAnimation = useCallback(() => {
-    circle1X.value = withSpring(0, { damping: 8, stiffness: 100 });
-    circle2X.value = withSpring(0, { damping: 8, stiffness: 100 });
+    circle1X.value = withSpring(5, { damping: 8, stiffness: 100 });
+    circle2X.value = withSpring(-5, { damping: 8, stiffness: 100 });
     mixProgress.value = withDelay(
       300,
       withSpring(1, { damping: 10, stiffness: 80 })
@@ -363,7 +363,6 @@ export default function ColorMixGame({ onComplete }: ColorMixGameProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
   },
@@ -407,6 +406,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
     ...SHADOWS.medium,
   },
   colorLabel: {
@@ -460,6 +461,8 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
     ...SHADOWS.small,
   },
   optionSelected: {

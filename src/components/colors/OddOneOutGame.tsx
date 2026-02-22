@@ -243,7 +243,6 @@ export default function OddOneOutGame({ rounds, onComplete }: OddOneOutGameProps
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
   },
