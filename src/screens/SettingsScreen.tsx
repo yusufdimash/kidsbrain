@@ -1,63 +1,85 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import GameHeader from '../components/GameHeader';
 import { useGameProgress } from '../context/GameProgressContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 import { S } from '../constants/strings';
 
+function AudioToggleRow({
+  emoji,
+  title,
+  subtitle,
+  value,
+  onToggle,
+}: {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  value: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Text style={styles.rowEmoji}>{emoji}</Text>
+        <View>
+          <Text style={styles.rowTitle}>{title}</Text>
+          <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: '#D0D0D0', true: COLORS.success }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const { state, dispatch } = useGameProgress();
 
-  const handleToggleSound = () => {
-    dispatch({ type: 'TOGGLE_SOUND' });
-  };
-
   const handleReset = () => {
-    Alert.alert(
-      S.resetProgress.id,
-      S.resetConfirm.id + '\n' + S.resetConfirm.en,
-      [
-        { text: S.back.en, style: 'cancel' },
-        {
-          text: S.resetProgress.en,
-          style: 'destructive',
-          onPress: () => dispatch({ type: 'RESET' }),
-        },
-      ]
-    );
+    Alert.alert(S.resetProgress.id, S.resetConfirm.id + '\n' + S.resetConfirm.en, [
+      { text: S.back.en, style: 'cancel' },
+      {
+        text: S.resetProgress.en,
+        style: 'destructive',
+        onPress: () => dispatch({ type: 'RESET' }),
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
-      <GameHeader
-        title={S.settings.id}
-        subtitle={S.settings.en}
-        showStars={false}
-      />
+      <GameHeader title={S.settings.id} subtitle={S.settings.en} showStars={false} />
 
       <View style={styles.content}>
-        {/* Sound Toggle */}
-        <View style={styles.row}>
-          <View style={styles.rowLeft}>
-            <Text style={styles.rowEmoji}>🔊</Text>
-            <View>
-              <Text style={styles.rowTitle}>
-                {state.soundEnabled ? S.soundOn.id : S.soundOff.id}
-              </Text>
-              <Text style={styles.rowSubtitle}>
-                {state.soundEnabled ? S.soundOn.en : S.soundOff.en}
-              </Text>
-            </View>
-          </View>
-          <Switch
-            value={state.soundEnabled}
-            onValueChange={handleToggleSound}
-            trackColor={{ false: '#D0D0D0', true: COLORS.success }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
+        <AudioToggleRow
+          emoji="🔊"
+          title={state.soundEnabled ? S.soundOn.id : S.soundOff.id}
+          subtitle={state.soundEnabled ? S.soundOn.en : S.soundOff.en}
+          value={state.soundEnabled}
+          onToggle={() => dispatch({ type: 'TOGGLE_SOUND' })}
+        />
 
-        {/* Stats */}
+        <AudioToggleRow
+          emoji="🎵"
+          title={state.musicEnabled ? S.musicOn.id : S.musicOff.id}
+          subtitle={state.musicEnabled ? S.musicOn.en : S.musicOff.en}
+          value={state.musicEnabled}
+          onToggle={() => dispatch({ type: 'TOGGLE_MUSIC' })}
+        />
+
+        <AudioToggleRow
+          emoji="👏"
+          title={state.sfxEnabled ? S.sfxOn.id : S.sfxOff.id}
+          subtitle={state.sfxEnabled ? S.sfxOn.en : S.sfxOff.en}
+          value={state.sfxEnabled}
+          onToggle={() => dispatch({ type: 'TOGGLE_SFX' })}
+        />
+
         <View style={styles.statsCard}>
           <Text style={styles.statsTitle}>📊 Statistik / Statistics</Text>
           <View style={styles.statRow}>
@@ -70,7 +92,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Reset */}
         <Pressable style={styles.resetButton} onPress={handleReset}>
           <Text style={styles.resetText}>🗑️ {S.resetProgress.id}</Text>
           <Text style={styles.resetSubtext}>{S.resetProgress.en}</Text>
@@ -87,6 +108,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.lg,
+    gap: SPACING.md,
   },
   row: {
     flexDirection: 'row',
@@ -118,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     padding: SPACING.lg,
     borderRadius: RADIUS.lg,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.sm,
     ...SHADOWS.small,
   },
   statsTitle: {
@@ -144,7 +166,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   resetButton: {
-    marginTop: SPACING.xl,
+    marginTop: SPACING.lg,
     padding: SPACING.md,
     borderRadius: RADIUS.lg,
     backgroundColor: '#FFF0F0',

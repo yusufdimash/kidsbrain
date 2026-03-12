@@ -21,7 +21,11 @@ export interface GameState {
   totalStars: number;
   modules: Record<ModuleId, ModuleProgress>;
   zooCollection: string[]; // animal IDs collected
+  // Legacy single switch kept for compatibility and quick global toggle
   soundEnabled: boolean;
+  // New granular audio controls
+  musicEnabled: boolean;
+  sfxEnabled: boolean;
   loaded: boolean;
 }
 
@@ -43,6 +47,8 @@ const initialState: GameState = {
   },
   zooCollection: [],
   soundEnabled: true,
+  musicEnabled: true,
+  sfxEnabled: true,
   loaded: false,
 };
 
@@ -51,6 +57,8 @@ type Action =
   | { type: 'COMPLETE_LEVEL'; module: ModuleId; levelId: string; stars: number }
   | { type: 'ADD_ZOO_ANIMAL'; animalId: string }
   | { type: 'TOGGLE_SOUND' }
+  | { type: 'TOGGLE_MUSIC' }
+  | { type: 'TOGGLE_SFX' }
   | { type: 'RESET' };
 
 function reducer(state: GameState, action: Action): GameState {
@@ -88,8 +96,33 @@ function reducer(state: GameState, action: Action): GameState {
         zooCollection: [...state.zooCollection, action.animalId],
       };
 
-    case 'TOGGLE_SOUND':
-      return { ...state, soundEnabled: !state.soundEnabled };
+    case 'TOGGLE_SOUND': {
+      const next = !state.soundEnabled;
+      return {
+        ...state,
+        soundEnabled: next,
+        musicEnabled: next,
+        sfxEnabled: next,
+      };
+    }
+
+    case 'TOGGLE_MUSIC': {
+      const nextMusic = !state.musicEnabled;
+      return {
+        ...state,
+        musicEnabled: nextMusic,
+        soundEnabled: nextMusic || state.sfxEnabled,
+      };
+    }
+
+    case 'TOGGLE_SFX': {
+      const nextSfx = !state.sfxEnabled;
+      return {
+        ...state,
+        sfxEnabled: nextSfx,
+        soundEnabled: state.musicEnabled || nextSfx,
+      };
+    }
 
     case 'RESET':
       return { ...initialState, loaded: true };
@@ -118,8 +151,18 @@ export function GameProgressProvider({ children }: { children: React.ReactNode }
       try {
         const json = await AsyncStorage.getItem(STORAGE_KEY);
         if (json) {
-          const saved = JSON.parse(json);
-          dispatch({ type: 'LOAD', payload: saved });
+          const saved = JSON.parse(json) as Partial<GameState>;
+          // Migration: legacy builds only had `soundEnabled`
+          const soundEnabled = saved.soundEnabled ?? true;
+          const payload: Partial<GameState> = {
+            ...saved,
+            musicEnabled: saved.musicEnabled ?? soundEnabled,
+            sfxEnabled: saved.sfxEnabled ?? soundEnabled,
+            soundEnabled:
+              saved.soundEnabled ??
+              ((saved.musicEnabled ?? true) || (saved.sfxEnabled ?? true)),
+          };
+          dispatch({ type: 'LOAD', payload });
         } else {
           dispatch({ type: 'LOAD', payload: {} });
         }

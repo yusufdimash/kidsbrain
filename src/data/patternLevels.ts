@@ -45,6 +45,20 @@ const easyLevels: PatternLevel[] = [
     options: ['🌻', '🌸', '🌹'],
     difficulty: 'easy',
   },
+  {
+    id: 'easy-6',
+    sequence: ['🚗', '🚌', '🚗', '🚌', '?'],
+    answer: '🚗',
+    options: ['🚗', '🚌', '🚲'],
+    difficulty: 'easy',
+  },
+  {
+    id: 'easy-7',
+    sequence: ['🍪', '🧁', '🍪', '🧁', '?'],
+    answer: '🍪',
+    options: ['🧁', '🍪', '🍫'],
+    difficulty: 'easy',
+  },
 ];
 
 // ── Medium: ABC repeating patterns & slightly longer sequences (levels 6-10) ─
@@ -86,6 +100,20 @@ const mediumLevels: PatternLevel[] = [
     options: ['⬛', '⬜', '🟫', '🟦'],
     difficulty: 'medium',
   },
+  {
+    id: 'med-6',
+    sequence: ['🐸', '🐟', '🐸', '🐟', '🐸', '?'],
+    answer: '🐟',
+    options: ['🐸', '🐟', '🦆', '🐢'],
+    difficulty: 'medium',
+  },
+  {
+    id: 'med-7',
+    sequence: ['🟥', '🟩', '🟦', '🟥', '?', '🟦'],
+    answer: '🟩',
+    options: ['🟨', '🟩', '🟥', '🟦'],
+    difficulty: 'medium',
+  },
 ];
 
 // ── Hard: AAB, ABBA, and growing patterns (levels 11-15) ─────────────────────
@@ -125,6 +153,20 @@ const hardLevels: PatternLevel[] = [
     sequence: ['🔵', '🔴', '🟢', '🔵', '?', '🟢'],
     answer: '🔴',
     options: ['🔵', '🔴', '🟢', '🟡'],
+    difficulty: 'hard',
+  },
+  {
+    id: 'hard-6',
+    sequence: ['🍓', '🍓', '🍍', '🍓', '🍓', '?'],
+    answer: '🍍',
+    options: ['🍓', '🍍', '🍉', '🍌'],
+    difficulty: 'hard',
+  },
+  {
+    id: 'hard-7',
+    sequence: ['⭐', '🌙', '☀️', '⭐', '🌙', '?'],
+    answer: '☀️',
+    options: ['⭐', '🌙', '☀️', '💫'],
     difficulty: 'hard',
   },
 ];

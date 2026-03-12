@@ -16,17 +16,19 @@ import type { PictureTemplate } from '../components/colors/ColoringCanvas';
 import ColorPalette, { DEFAULT_COLORS, COLOR_NAMES } from '../components/colors/ColorPalette';
 import ColorMixGame from '../components/colors/ColorMixGame';
 import OddOneOutGame from '../components/colors/OddOneOutGame';
+import ColorNameQuiz from '../components/colors/ColorNameQuiz';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 import { S, bilingual } from '../constants/strings';
 import { useProgress } from '../hooks/useProgress';
 import { useSound } from '../hooks/useSound';
 
-type GameMode = 'menu' | 'coloring' | 'mix' | 'odd';
+type GameMode = 'menu' | 'coloring' | 'mix' | 'odd' | 'nameQuiz';
 
 const MODE_BUTTONS: { mode: GameMode; labelId: string; labelEn: string; emoji: string }[] = [
   { mode: 'coloring', labelId: 'Mewarnai', labelEn: 'Coloring', emoji: '🖌️' },
   { mode: 'mix', labelId: 'Campur', labelEn: 'Mix', emoji: '🧪' },
   { mode: 'odd', labelId: 'Cari Beda', labelEn: 'Odd One', emoji: '👁️' },
+  { mode: 'nameQuiz', labelId: 'Tebak Nama', labelEn: 'Color Name', emoji: '🧠' },
 ];
 
 export default function ColorWorldScreen() {
@@ -48,6 +50,7 @@ export default function ColorWorldScreen() {
   // Game keys for remount
   const [mixKey, setMixKey] = useState(0);
   const [oddKey, setOddKey] = useState(0);
+  const [nameQuizKey, setNameQuizKey] = useState(0);
 
   const handleZoneFill = useCallback(
     (zoneId: string) => {
@@ -101,6 +104,16 @@ export default function ColorWorldScreen() {
     [progress, sound]
   );
 
+  const handleNameQuizComplete = useCallback(
+    (stars: number) => {
+      sound.playStar();
+      progress.completeLevel('nameQuiz', stars);
+      setRewardStars(stars);
+      setShowConfetti(true);
+    },
+    [progress, sound]
+  );
+
   const handleBack = () => {
     if (showConfetti) {
       setShowConfetti(false);
@@ -125,6 +138,8 @@ export default function ColorWorldScreen() {
       setMixKey((k) => k + 1);
     } else if (mode === 'odd') {
       setOddKey((k) => k + 1);
+    } else if (mode === 'nameQuiz') {
+      setNameQuizKey((k) => k + 1);
     }
   };
 
@@ -158,7 +173,10 @@ export default function ColorWorldScreen() {
               >
                 <Pressable
                   style={styles.modeCard}
-                  onPress={() => setMode(btn.mode)}
+                  onPress={() => {
+                    sound.playTap();
+                    setMode(btn.mode);
+                  }}
                 >
                   <Text style={styles.modeEmoji}>{btn.emoji}</Text>
                   <Text style={styles.modeLabelId}>{btn.labelId}</Text>
@@ -336,6 +354,29 @@ export default function ColorWorldScreen() {
             <Pressable
               style={styles.tryAgainButton}
               onPress={() => setOddKey((k) => k + 1)}
+            >
+              <Text style={styles.tryAgainEmoji}>🔄</Text>
+              <Text style={styles.tryAgainText}>
+                {S.retry.id} / {S.retry.en}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.backToHomeButton} onPress={handleBack}>
+              <Text style={styles.backToHomeText}>
+                ◀ {S.back.id} / {S.back.en}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      )}
+
+      {/* Color name quiz mode */}
+      {mode === 'nameQuiz' && !showConfetti && (
+        <ScrollView style={styles.gameContainer} contentContainerStyle={styles.gameScrollContent}>
+          <ColorNameQuiz key={nameQuizKey} onComplete={handleNameQuizComplete} />
+          <View style={styles.bottomButtons}>
+            <Pressable
+              style={styles.tryAgainButton}
+              onPress={() => setNameQuizKey((k) => k + 1)}
             >
               <Text style={styles.tryAgainEmoji}>🔄</Text>
               <Text style={styles.tryAgainText}>

@@ -71,6 +71,7 @@ export const S = {
   colorFill: t('Warnai Gambarnya!', 'Color the Picture!'),
   colorMix: t('Campur Warnanya!', 'Mix the Colors!'),
   colorOdd: t('Yang Mana Berbeda?', 'Which One Is Different?'),
+  colorNameQuiz: t('Tebak Nama Warna', 'Guess Color Name'),
 
   // Tracing
   tracingTitle: t('Ayo Menulis!', "Let's Trace!"),
@@ -89,6 +90,10 @@ export const S = {
   settings: t('Pengaturan', 'Settings'),
   soundOn: t('Suara Aktif', 'Sound On'),
   soundOff: t('Suara Mati', 'Sound Off'),
+  musicOn: t('Musik Aktif', 'Music On'),
+  musicOff: t('Musik Mati', 'Music Off'),
+  sfxOn: t('Efek Suara Aktif', 'Sound Effects On'),
+  sfxOff: t('Efek Suara Mati', 'Sound Effects Off'),
   resetProgress: t('Hapus Kemajuan', 'Reset Progress'),
   resetConfirm: t('Yakin mau hapus semua kemajuan?', 'Are you sure you want to reset all progress?'),
 
